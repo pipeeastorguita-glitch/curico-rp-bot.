@@ -1,0 +1,47 @@
+import os
+import discord
+from discord.ext import commands
+
+intents = discord.Intents.default()
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f"Bot conectado: {bot.user}")
+    await bot.tree.sync()
+
+@bot.tree.command(name="crear_canales", description="Crear canales de Curicó RP")
+async def crear_canales(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.manage_channels:
+        await interaction.response.send_message("No tienes permiso.", ephemeral=True)
+        return
+
+    canales = {
+        "📢・INFORMACIÓN": ["📜・reglas", "📢・anuncios"],
+        "💬・GENERAL": ["💬・chat-general", "🎮・chat-erlc"],
+        "🔐・VERIFICACIÓN": ["✅・verificación", "❓・ayuda"],
+        "🎫・TICKETS": ["🎫・abrir-ticket"],
+        "📝・POSTULACIONES": ["👮・policía", "🚒・bomberos", "🚑・ems"],
+        "🚨・REPORTES": ["🚨・reportar-jugador"],
+        "🎉・EVENTOS": ["🎉・eventos"],
+        "📸・MEDIA": ["📸・fotos", "🎥・videos"],
+    }
+
+    creados = 0
+    for categoria_nombre, nombres in canales.items():
+        categoria = discord.utils.get(
+            interaction.guild.categories, name=categoria_nombre
+        )
+        if categoria:
+            for nombre in nombres:
+                if not discord.utils.get(categoria.text_channels, name=nombre):
+                    await interaction.guild.create_text_channel(
+                        nombre, category=categoria
+                    )
+                    creados += 1
+
+    await interaction.response.send_message(
+        f"¡Listo! Se crearon {creados} canales."
+    )
+
+bot.run(os.environ["DISCORD_TOKEN"])
